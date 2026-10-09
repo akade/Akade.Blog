@@ -1,0 +1,13 @@
+{{ define "main" }}
+  <section class="post-list">
+    {{ range first 10 (where .Site.RegularPages "Section" "posts") }}
+      <article class="post-item">
+        <a class="post-item-link" href="{{ .RelPermalink }}">
+          <h3>{{ .Title }}</h3>
+          {{ partial "post-meta.html" . }}
+          <p>{{ .Summary }}</p>
+        </a>
+      </article>
+    {{ end }}
+  </section>
+{{ end }}

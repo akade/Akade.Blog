@@ -1,0 +1,23 @@
+baseURL: "https://blog.akade.ch/"
+languageCode: "en-us"
+title: "Inlined — Akade's Blog"
+enableRobotsTXT: true
+pagination:
+  pagerSize: 10
+permalinks:
+  posts: "/posts/:slug/"
+params:
+  description: "Handcrafted notes on .NET, C# and anything that deserves a closer look."
+  accent: "#6b7a6b"
+  github: "https://github.com/akade"
+outputs:
+  home:
+    - HTML
+    - RSS
+  section:
+    - HTML
+    - RSS
+markup:
+  highlight:
+    noClasses: false
+    lineNos: false

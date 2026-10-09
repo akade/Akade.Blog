@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+    <meta name="description" content="{{ .Site.Params.description }}" />
+    {{ with .OutputFormats.Get "rss" }}
+      <link rel="alternate" type="application/rss+xml" title="{{ $.Site.Title }}" href="{{ .RelPermalink }}" />
+    {{ end }}
+    <script>
+      (function () {
+        const THEME_KEY = "theme";
+        const THEME_LIGHT = "light";
+        const THEME_DARK = "dark";
+        const isDarkSchemePreferredMedia = window.matchMedia("(prefers-color-scheme: dark)");
+
+        // Apply the theme before the page is rendered to prevent a flash of incorrect theme
+        applyTheme(getStoredTheme() || getSystemTheme());
+
+        document.addEventListener("DOMContentLoaded", function () {
+          const button = document.querySelector(".theme-toggle");
+          if (!button) return;
+          button.addEventListener("click", toggleTheme);
+          isDarkSchemePreferredMedia.addEventListener("change", function () {
+            if (getStoredTheme()) return;
+            applyTheme(getSystemTheme());
+          });
+        });
+
+        function getStoredTheme() {
+          const stored = localStorage.getItem(THEME_KEY);
+          return stored === THEME_LIGHT || stored === THEME_DARK ? stored : null;
+        }
+
+        function getSystemTheme() {
+          return isDarkSchemePreferredMedia.matches ? THEME_DARK : THEME_LIGHT;
+        }
+
+        function applyTheme(theme) {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+
+        function toggleTheme() {
+          const current = document.documentElement.getAttribute("data-theme") || THEME_LIGHT;
+          const next = current === THEME_DARK ? THEME_LIGHT : THEME_DARK;
+          applyTheme(next);
+          
+          const systemTheme = getSystemTheme();
+          if (next === systemTheme) {
+            localStorage.removeItem(THEME_KEY);
+          } else {
+            localStorage.setItem(THEME_KEY, next);
+          }
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Sora:wght@400;600&display=swap"
+    />
+    {{ $styles := resources.Get "css/main.css" | minify | fingerprint }}
+    <link rel="stylesheet" href="{{ $styles.RelPermalink }}" integrity="{{ $styles.Data.Integrity }}" />
+  </head>
+  <body>
+    {{ partial "header.html" . }}
+    <main class="content">
+      {{ block "main" . }}{{ end }}
+    </main>
+    {{ partial "footer.html" . }}
+    {{ $js := resources.Get "js/code-copy.js" | minify | fingerprint }}
+    <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" defer></script>
+  </body>
+</html>
