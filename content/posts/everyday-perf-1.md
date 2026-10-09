@@ -1,15 +1,13 @@
 ---
 title: "Everyday performance 1 - Java Style Enums"
-date: 2026-10-05
+date: 2026-10-09
 draft: false
 slug: "everyday-perf-1"
 ---
 
-TODO: Think about headers
-
 The first post of this blog will dive into refactoring a real-life code snippet for readability and simplicity
 while simultaneously improving performance by up to 50x. This kicks off the *everyday performance series*, where
-I'll try to refute the claim that (reasonably) performant code surely comes with a tradeoff in maintainability or readability.
+I'll try to refute the claim that (reasonably) performant code always comes with a tradeoff in maintainability or readability.
 
 <!--more-->
 
@@ -120,6 +118,8 @@ public class Enumeration
 }
 ```
 
+## Equality
+
 So first thing to notice is that the private constructor ensures that no one outside
 can create an instance, meaning that if we don't mess up locally within the class, only 
 one instance per value is ever created.
@@ -186,6 +186,8 @@ public class EqualityBenchmark
 | V1       | 0.1804 ns | 0.0049 ns | 0.0046 ns |  0.19 |         - |          NA |
 
 **A 5x gain from deleting unnecessary code!**
+
+## Curiously recurring template pattern
 
 Now, the current code doesn't allow us to write `MyEnum.FromName("First")`. We actually
 have to write `MyEnum.FromName<MyEnum>("First")` respectively `Enumeration.FromName<MyEnum>("First")`.
@@ -257,6 +259,8 @@ This is not just simpler to use for us but also a bit faster:
 | Baseline | 62.3583 ns | 0.5907 ns | 0.5525 ns |  1.00 | 0.0110 |     184 B |        1.00 |
 | V2       | 57.3083 ns | 0.4983 ns | 0.4661 ns |  0.92 | 0.0110 |     184 B |        1.00 |
 
+## Fixed set of values
+
 As we restrict creation of values, let's make it more explicit that this is the case. With
 the type parameter `T` now being readily available during initialization, we can change
 `GetAll()` into an immutable property:
@@ -286,6 +290,8 @@ This actually caches reflection and gives us a huge boost:
 | Baseline | 62.3583 ns | 0.5907 ns | 0.5525 ns |  1.00 | 0.0110 |     184 B |        1.00 |
 | V2       | 57.3083 ns | 0.4983 ns | 0.4661 ns |  0.92 | 0.0110 |     184 B |        1.00 |
 | V3       |  8.7480 ns | 0.1081 ns | 0.1012 ns |  0.14 | 0.0033 |      56 B |        0.30 |
+
+## Simplifying `Parse`
 
 However, I still think the `Parse<K>` shared code is a bit too complex with passing in a lambda and
  `value` is only used for the exception. How could we get rid of that? Having the `All`-property, let's prepare
@@ -334,6 +340,8 @@ This gets rid of the enumeration and all allocation and hence, a bit of a boost:
 | V3       |  8.7480 ns | 0.1081 ns | 0.1012 ns |  0.14 | 0.0033 |      56 B |        0.30 |
 | V4       |  2.1785 ns | 0.0372 ns | 0.0348 ns |  0.03 |      - |         - |        0.00 |
 
+## Read-only dictionaries & final result
+
 Last but not least, the dictionaries should be read-only. This is the only part where I'm using a bit
 of performance knowledge: Static, only once created read-only collection should, as a rule of thumb, be *'Frozen'* instead
 of `ImmutableDictionary` or just using the static type `IReadOnlyDictionary`. But it's simple enough, no need for obscure performance magic:
@@ -365,8 +373,9 @@ So we achieved a speed up of **~33x to ~50x for `FromName`/`FromValue` and aroun
 comparisons while **we got rid of almost half of the code.**. Almost all refactorings have been
 high-level and can be motivated by other reasons than performance alone! No arcane magic, just
 simple and readable code with (close to) zero tradeoffs. Whether you write your code yourself or
-let your agents code, performant code does not need to be complicated and no code needs
-to be slow!
+let your agents code, reasonably performant code does not need to be complicated.
+While the measured time is tiny here (nanoseconds) and will probably only show up in hot paths,
+it's less code and hence, still be no-brainer.
 
 For completeness, here is the final version of the code:
 
